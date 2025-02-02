@@ -1,8 +1,11 @@
 const { Client } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 
-const client = new Client();
-
+const client = new Client({
+  puppeteer: {
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  }
+});
 const users = {}; // Para rastrear el estado de la conversación con cada usuario
 
 client.on("qr", (qr) => {
