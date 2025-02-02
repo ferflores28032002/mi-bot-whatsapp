@@ -3,8 +3,14 @@ const qrcode = require("qrcode-terminal");
 
 const client = new Client({
   puppeteer: {
-    executablePath: "/usr/bin/chromium-browser",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--no-zygote",
+      "--single-process",
+    ],
   },
 });
 
