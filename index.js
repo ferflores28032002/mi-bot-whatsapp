@@ -1,18 +1,7 @@
 const { Client } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 
-const client = new Client({
-  puppeteer: {
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--no-zygote",
-      "--single-process",
-    ],
-  },
-});
+const client = new Client();
 
 const users = {}; // Para rastrear el estado de la conversación con cada usuario
 
@@ -31,11 +20,16 @@ client.on("message", async (message) => {
 
   console.log(`📩 Mensaje de ${chatId}: ${text}`);
 
+  // Si el usuario ya finalizó la conversación, no responder más
+  if (users[chatId]?.step === "finalizado") {
+    return;
+  }
+
   // Si es la primera interacción, enviamos el mensaje de bienvenida
   if (!users[chatId]) {
     users[chatId] = { step: "menu" }; // Inicializamos el estado del usuario
     await message.reply(
-      "👋 ¡Hola! Somos *TechCams*, especialistas en *tecnología y ventas de cámaras de seguridad*.\n\n🔹 ¿En qué podemos ayudarte? Responde con un número:\n\n" +
+      "👋 ¡Hola! Somos *CCTV Soluciones*, especialistas en *tecnología y ventas de cámaras de seguridad*.\n\n🔹 ¿En qué podemos ayudarte? Responde con un número:\n\n" +
         "1️⃣ Ver precios de nuestros productos 📊\n" +
         "2️⃣ Conocer nuestros modelos de cámaras 📸\n" +
         "3️⃣ Contactar con un asesor humano 👨‍💼\n" +
@@ -65,11 +59,10 @@ client.on("message", async (message) => {
         return;
 
       case "3":
-        users[chatId].step = "asesor";
         await message.reply(
-          "👨‍💼 Te conectaremos con un asesor en unos minutos.\n\n" +
-            "🔹 ¿Deseas compartir tu nombre para que la atención sea más personalizada? (Responde *Sí* o *No*)"
+          "👨‍💼 Te conectaremos con un asesor en unos minutos. Gracias por comunicarte con *CCTV Soluciones*."
         );
+        users[chatId].step = "finalizado"; // Finalizamos la conversación con este usuario
         return;
 
       case "4":
@@ -90,22 +83,21 @@ client.on("message", async (message) => {
 
   // Respuestas según la opción elegida
   if (users[chatId].step === "precios") {
-    if (text === "sí") {
+    if (text === "sí" || text === "si") {
       await message.reply(
-        "📜 Aquí tienes nuestro catálogo: [www.techcams.com/catalogo](#)\n\n🔹 ¿Necesitas ayuda con algo más? (Escribe *Menú* para volver al inicio)"
+        "📜 Aquí tienes nuestro catálogo: [www.cctvsoluciones.com/catalogo](#)\n\n🔹 ¿Necesitas ayuda con algo más? (Escribe *Menú* para volver al inicio)"
       );
-      users[chatId].step = "menu";
     } else {
       await message.reply(
         "✅ Entendido. Si necesitas más información, escribe *Menú* para volver al inicio."
       );
-      users[chatId].step = "menu";
     }
+    users[chatId].step = "menu";
     return;
   }
 
   if (users[chatId].step === "modelos") {
-    if (text === "sí") {
+    if (text === "sí" || text === "si") {
       await message.reply(
         "📷 Disponemos de:\n1️⃣ Cámara HD 1080p\n2️⃣ Cámara con visión nocturna\n3️⃣ Cámara con detección de movimiento\n\n🔹 Responde con el número del modelo que quieres conocer."
       );
@@ -149,33 +141,10 @@ client.on("message", async (message) => {
     return;
   }
 
-  if (users[chatId].step === "asesor") {
-    if (text === "sí") {
-      await message.reply(
-        "😊 ¡Genial! Envíanos tu nombre y un asesor se pondrá en contacto contigo."
-      );
-      users[chatId].step = "esperando_nombre";
-    } else {
-      await message.reply(
-        "✅ No hay problema. Un asesor se comunicará contigo pronto. Si necesitas más información, escribe *Menú* para volver al inicio."
-      );
-      users[chatId].step = "menu";
-    }
-    return;
-  }
-
-  if (users[chatId].step === "esperando_nombre") {
-    await message.reply(
-      `Gracias, *${text}*. Un asesor se comunicará contigo en breve. 😊`
-    );
-    users[chatId].step = "menu";
-    return;
-  }
-
   if (users[chatId].step === "promociones") {
-    if (text === "sí") {
+    if (text === "sí" || text === "si") {
       await message.reply(
-        "🎁 ¡Aquí tienes un código de *10% de descuento*: *PROMO10* 🎊\n\n🔹 Usa este código en nuestra web: [www.techcams.com](#)"
+        "🎁 ¡Aquí tienes un código de *10% de descuento*: *PROMO10* 🎊\n\n🔹 Usa este código en nuestra web: [www.cctvsoluciones.com](#)"
       );
     } else {
       await message.reply(
@@ -186,7 +155,12 @@ client.on("message", async (message) => {
     return;
   }
 
-  if (text === "menú") {
+  if (
+    text === "menú" ||
+    text === "menu" ||
+    text === "Menu" ||
+    text === "Menú"
+  ) {
     users[chatId].step = "menu";
     await message.reply(
       "🔹 Volviendo al menú principal...\n\n1️⃣ Ver precios 📊\n2️⃣ Modelos de cámaras 📸\n3️⃣ Contactar con un asesor 👨‍💼\n4️⃣ Promociones 🎉\n\nEscribe el número de la opción que te interesa."
